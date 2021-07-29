@@ -26,6 +26,13 @@ class Presupuesto {
 
     nuevoGasto(gasto){
         this.gastos = [...this.gastos, gasto];
+        this.calcularRestante();
+    }
+
+    calcularRestante(){
+        const gastado = this.gastos.reduce( (total, gasto) => total + gasto.cantidad, 0);
+
+        this.restante = this.presupuesto - gastado;
     }
 }
 
@@ -89,6 +96,39 @@ class UI {
         })
     }
 
+    actualizarRestante(restante){
+        document.querySelector('#restante').textContent = restante;
+    }
+
+    comprobarPresupuesto(presupuestoObj){
+        const {presupuesto, restante} = presupuestoObj;
+        const restanteDiv = document.querySelector('.restante');
+
+        // Comprobar 25%
+        if(( presupuesto / 4 ) > restante){
+
+            restanteDiv.classList.remove('alert-success', 'alert-warning');
+            restanteDiv.classList.add('alert-danger');
+
+        } else if(( presupuesto / 2 ) > restante){
+
+            restanteDiv.classList.remove('alert-success', 'alert-danger');
+            restanteDiv.classList.add('alert-warning');
+
+        } else {
+            restanteDiv.classList.remove('alert-warning', 'alert-danger');
+            restanteDiv.classList.add('alert-success');
+        }
+
+
+        // Si el total es menor a 0
+        if(restante <= 0){
+            ui.mostrarAlerta('Presupuesto agotado', 'error');
+
+            formulario.querySelector('button[type="submit"]').disabled = true;
+        }
+    }
+
     limpiarHTML(){
         while(gastoListado.firstChild){
             gastoListado.removeChild(gastoListado.firstChild);
@@ -110,7 +150,6 @@ function preguntarPresupuesto(){
 
     // Presupuesto valido
     presupuesto = new Presupuesto(presupuestoUsuario);
-    console.log(presupuesto);
 
     ui.intertarPresupuesto(presupuesto);
 }
@@ -141,8 +180,13 @@ function agregarGasto(e){
     ui.mostrarAlerta('Gasto agregado correctamente');
 
     // Imprimir gastos
-    const { gastos } = presupuesto;
+    const { gastos , restante } = presupuesto;
+
     ui.agregarGastoListado(gastos);
+
+    ui.actualizarRestante(restante);
+
+    ui.comprobarPresupuesto(presupuesto);
 
     // Reinicia el formulario
     formulario.reset();
